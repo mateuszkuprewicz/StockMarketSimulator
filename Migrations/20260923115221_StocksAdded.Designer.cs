@@ -11,8 +11,8 @@ using StockSimulator.Models;
 namespace StockSimulator.Migrations
 {
     [DbContext(typeof(StockSimulatorDbContext))]
-    [Migration("20260912163839_SeedInitialStacks")]
-    partial class SeedInitialStacks
+    [Migration("20260923115221_StocksAdded")]
+    partial class StocksAdded
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,7 +35,7 @@ namespace StockSimulator.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Stacks");
+                    b.ToTable("Stocks");
 
                     b.HasData(
                         new
@@ -88,10 +88,17 @@ namespace StockSimulator.Migrations
                     b.Property<int>("StockId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StockId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Transactions");
                 });
@@ -135,7 +142,49 @@ namespace StockSimulator.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("StockId");
+
+                    b.HasIndex("UserId");
+
                     b.ToTable("UserShares");
+                });
+
+            modelBuilder.Entity("StockSimulator.Models.Transaction", b =>
+                {
+                    b.HasOne("StockSimulator.Models.Stock", "Stock")
+                        .WithMany()
+                        .HasForeignKey("StockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StockSimulator.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Stock");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StockSimulator.Models.UserShare", b =>
+                {
+                    b.HasOne("StockSimulator.Models.Stock", "Stock")
+                        .WithMany()
+                        .HasForeignKey("StockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StockSimulator.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Stock");
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

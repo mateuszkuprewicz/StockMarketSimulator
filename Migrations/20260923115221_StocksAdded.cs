@@ -7,13 +7,13 @@
 namespace StockSimulator.Migrations
 {
     /// <inheritdoc />
-    public partial class SeedInitialStacks : Migration
+    public partial class StocksAdded : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.InsertData(
-                table: "Stacks",
+                table: "Stocks",
                 columns: new[] { "Id", "Name", "Price" },
                 values: new object[,]
                 {
@@ -29,27 +29,27 @@ namespace StockSimulator.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DeleteData(
-                table: "Stacks",
+                table: "Stocks",
                 keyColumn: "Id",
                 keyValue: 1);
 
             migrationBuilder.DeleteData(
-                table: "Stacks",
+                table: "Stocks",
                 keyColumn: "Id",
                 keyValue: 2);
 
             migrationBuilder.DeleteData(
-                table: "Stacks",
+                table: "Stocks",
                 keyColumn: "Id",
                 keyValue: 3);
 
             migrationBuilder.DeleteData(
-                table: "Stacks",
+                table: "Stocks",
                 keyColumn: "Id",
                 keyValue: 4);
 
             migrationBuilder.DeleteData(
-                table: "Stacks",
+                table: "Stocks",
                 keyColumn: "Id",
                 keyValue: 5);
         }

@@ -33,6 +33,38 @@ namespace StockSimulator.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Stocks");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "World Wide Water",
+                            Price = 2.23m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Ultra Evil Company Inc.",
+                            Price = 1024m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Artistic Artists' Art",
+                            Price = 0.5m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Sport TM",
+                            Price = 25.13m
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Country Government S.A.",
+                            Price = 314m
+                        });
                 });
 
             modelBuilder.Entity("StockSimulator.Models.Transaction", b =>
