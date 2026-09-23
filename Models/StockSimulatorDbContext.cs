@@ -1,15 +1,16 @@
 ﻿using System.Collections;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace StockSimulator.Models;
 
-public class StockSimulatorDbContext : DbContext
+public class StockSimulatorDbContext : IdentityDbContext<IdentityUser>
 {
     public StockSimulatorDbContext(DbContextOptions<StockSimulatorDbContext> options)
         : base(options)
     {
     }
-    public DbSet<User> Users { get; set; }
     public DbSet<Stock> Stocks { get; set; }
     public DbSet<Transaction>  Transactions { get; set; }
     public DbSet<UserShare> UserShares { get; set; }

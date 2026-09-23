@@ -1,9 +1,8 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace StockSimulator.Models;
 
-public class User
+public class User : IdentityUser
 {
-    public int Id { get; set; }
-    public required string Login { get; set; }
-    public required string PasswordHash { get; set; }
     public decimal Money { get; set; }
 }
