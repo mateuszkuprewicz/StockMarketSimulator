@@ -124,4 +124,59 @@ public class StocksController : ControllerBase
 
         return Ok(new { message = "Successfully sold " + request.Count + " " + requestedStock.Name + " stocks." });
     }
+    
+    [HttpGet("transactions")]
+    [Authorize]
+    public async Task<IActionResult> GetTransactions()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized(new { message = "User not found." });
+        }
+
+        var transactions = await _context.Transactions
+            .Include(t => t.Stock)
+            .Where(t => t.UserId == user.Id)
+            .OrderByDescending(t => t.Date)
+            .Select(t => new
+            {
+                Id = t.Id,
+                StockName = t.Stock.Name,
+                Quantity = t.Quantity,
+                Price = t.Price,
+                Date = t.Date,
+                Type = t.Type.ToString()
+            })
+            .ToListAsync();
+
+        return Ok(transactions);
+    }
+
+    [HttpGet("shares")]
+    [Authorize]
+    public async Task<IActionResult> GetShares()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized(new { message = "User not found." });
+        }
+
+        var shares = await _context.UserShares
+            .Include(s => s.Stock)
+            .Where(s => s.UserId == user.Id)
+            .Select(s => new
+            {
+                Id = s.Id,
+                StockId = s.StockId,
+                StockName = s.Stock.Name,
+                Quantity = s.Quantity,
+                CurrentPrice = s.Stock.Price,
+                TotalValue = s.Quantity * s.Stock.Price
+            })
+            .ToListAsync();
+
+        return Ok(shares);
+    }
 }

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using StockSimulator.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
+using StockSimulator.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -24,6 +25,8 @@ builder.Services.AddOpenApi(options =>
 {
     options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
 });
+
+builder.Services.AddHostedService<StockPriceSimulatorService>();
 
 var app = builder.Build();
 
