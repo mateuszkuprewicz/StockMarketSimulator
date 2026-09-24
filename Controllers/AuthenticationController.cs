@@ -18,6 +18,26 @@ public class AuthenticationController : ControllerBase
         _userManager = userManager;
     }
 
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetMe()
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        
+        if (currentUser == null)
+        {
+            return Unauthorized(new { message = "User not found." });
+        }
+
+        var userInfo = new
+        {
+            Id = currentUser.Id,
+            Email = currentUser.Email,
+            Balance = currentUser.Money
+        };
+        return Ok(userInfo);
+    }
+    
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
@@ -38,6 +58,9 @@ public class AuthenticationController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] RegisterRequest request)
     {
+        var user = await _userManager.GetUserAsync(User);
+        if(user != null)
+            return BadRequest(new { message = "You are already logged in. Log out first"});
         var result = await _signInManager.PasswordSignInAsync(request.login, request.password, request.rememberMe, true);
         if (result.Succeeded)
             return Ok(new { message = "User logged in successfully." });
