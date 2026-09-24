@@ -27,7 +27,7 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
-app.MapIdentityApi<IdentityUser>();
+// app.MapIdentityApi<User>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
