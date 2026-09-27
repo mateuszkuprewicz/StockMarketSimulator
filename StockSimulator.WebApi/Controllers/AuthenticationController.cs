@@ -76,5 +76,3 @@ public class AuthenticationController : ControllerBase
         return Ok(new { message = "Logged out Successfully." });
     }
 }
-
-

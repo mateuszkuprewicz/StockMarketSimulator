@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/StockSimulator.WebApi/">
+    <Project Path="StockSimulator.WebApi/StockSimulator.csproj" />
+  </Folder>
+  <Project Path="StockSimulator.Tests/StockSimulator.Tests.csproj" />
+</Solution>
