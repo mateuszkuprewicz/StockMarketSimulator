@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace StockSimulator.Models;
 
-public class StockSimulatorDbContext : IdentityDbContext<IdentityUser>
+public class StockSimulatorDbContext : IdentityDbContext<User>
 {
     public StockSimulatorDbContext(DbContextOptions<StockSimulatorDbContext> options)
         : base(options)

@@ -34,8 +34,11 @@ public class StocksController : ControllerBase
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
-            return Unauthorized(new { message = "User not found." });
+            return Unauthorized(new { message = "User not logged." });
         }
+
+        if (request.Count <= 0)
+            return BadRequest("You must buy a positive number of shares");
         
         var requestedStock = await _context.Stocks.SingleOrDefaultAsync(s => s.Id == request.Id);
         if(requestedStock == null)
@@ -43,7 +46,7 @@ public class StocksController : ControllerBase
         
         decimal requestCost = request.Count * requestedStock.Price;
         if(requestCost > user.Money)
-            return BadRequest(new { message = "You don't have enough money to buy these stocks." });
+            return BadRequest(new { message = "You don't have enough money to buy these shares." });
         
         user.Money -= requestCost;
         
@@ -77,7 +80,7 @@ public class StocksController : ControllerBase
         await _context.SaveChangesAsync();
         transaction.Commit();
         
-        return Ok(new {message = "Successfully bought " + request.Count + " " + requestedStock.Name + " stocks." });
+        return Ok(new {message = "Successfully bought " + request.Count + " " + requestedStock.Name + " shares." });
     }
 
     [HttpPost("sell")]
@@ -89,8 +92,11 @@ public class StocksController : ControllerBase
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
-            return Unauthorized(new { message = "User not found." });
+            return Unauthorized(new { message = "User not logged." });
         }
+
+        if (request.Count <= 0)
+            return BadRequest("You must sell a positive number of shares.");
     
         Stock? requestedStock = await _context.Stocks.SingleOrDefaultAsync(s => s.Id == request.Id);
         if(requestedStock == null)
@@ -98,9 +104,9 @@ public class StocksController : ControllerBase
         
         var userShare =  await _context.UserShares.SingleOrDefaultAsync(s => s.UserId == user.Id && s.StockId == request.Id);
         if (userShare == null)
-            return BadRequest(new { message = "You don't own this stock." });
+            return BadRequest(new { message = "You don't own this share." });
         if(request.Count > userShare.Quantity)
-            return BadRequest(new { message = "You do not own " + request.Count + " stocks." });
+            return BadRequest(new { message = "You do not own " + request.Count + " shares." });
         
         user.Money += request.Count * requestedStock.Price;
 
@@ -122,7 +128,7 @@ public class StocksController : ControllerBase
         await _context.SaveChangesAsync();
         transaction.Commit();
 
-        return Ok(new { message = "Successfully sold " + request.Count + " " + requestedStock.Name + " stocks." });
+        return Ok(new { message = "Successfully sold " + request.Count + " " + requestedStock.Name + " shares." });
     }
     
     [HttpGet("transactions")]
@@ -132,7 +138,7 @@ public class StocksController : ControllerBase
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
-            return Unauthorized(new { message = "User not found." });
+            return Unauthorized(new { message = "User not logged." });
         }
 
         var transactions = await _context.Transactions
@@ -160,7 +166,7 @@ public class StocksController : ControllerBase
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
-            return Unauthorized(new { message = "User not found." });
+            return Unauthorized(new { message = "User not logged." });
         }
 
         var shares = await _context.UserShares
