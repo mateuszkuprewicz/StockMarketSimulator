@@ -414,10 +414,10 @@ public class StocksControllerTests
 
         var transaction = await context.Transactions.SingleOrDefaultAsync();
         Assert.NotNull(transaction);
-        Assert.Equal(transaction.Quantity, userShareQuantity);
-        Assert.Equal(transaction.StockId, stockId);
-        Assert.Equal(transaction.UserId, userId);
-        Assert.Equal(transaction.Price, stockPrice);
+        Assert.Equal(userShareQuantity, transaction.Quantity);
+        Assert.Equal(stockId, transaction.StockId);
+        Assert.Equal(userId, transaction.UserId);
+        Assert.Equal(stockPrice, transaction.Price);
         Assert.Equal(TransactionType.Sell, transaction.Type);
     }
 

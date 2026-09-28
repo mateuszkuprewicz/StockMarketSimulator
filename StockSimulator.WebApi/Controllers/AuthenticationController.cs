@@ -41,6 +41,9 @@ public class AuthenticationController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
+        var temp = await _userManager.GetUserAsync(User);
+        if(temp != null)
+            return BadRequest(new { message = "User is logged in." });
         var user = new User
         {
             Email = request.login,
