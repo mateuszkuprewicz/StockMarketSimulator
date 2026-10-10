@@ -145,10 +145,48 @@ namespace StockSimulator.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("StockSimulator.Models.Stock", b =>
+            modelBuilder.Entity("StockSimulator.Models.Database.MarketOffer", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Amount")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("StockId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StockId");
+
+                    b.ToTable("MarketOffers");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("MarketOffer");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("StockSimulator.Models.Database.Stock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("CompanyBudget")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FreeFloat")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -158,6 +196,9 @@ namespace StockSimulator.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("TotalShares")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.ToTable("Stocks");
@@ -166,36 +207,51 @@ namespace StockSimulator.Migrations
                         new
                         {
                             Id = 1,
+                            CompanyBudget = 0m,
+                            FreeFloat = 10,
                             Name = "World Wide Water",
-                            Price = 2.23m
+                            Price = 2.23m,
+                            TotalShares = 1000
                         },
                         new
                         {
                             Id = 2,
+                            CompanyBudget = 0m,
+                            FreeFloat = 8,
                             Name = "Ultra Evil Company Inc.",
-                            Price = 1024m
+                            Price = 1024m,
+                            TotalShares = 500
                         },
                         new
                         {
                             Id = 3,
+                            CompanyBudget = 0m,
+                            FreeFloat = 12,
                             Name = "Artistic Artists' Art",
-                            Price = 0.5m
+                            Price = 0.5m,
+                            TotalShares = 100
                         },
                         new
                         {
                             Id = 4,
+                            CompanyBudget = 0m,
+                            FreeFloat = 15,
                             Name = "Sport TM",
-                            Price = 25.13m
+                            Price = 25.13m,
+                            TotalShares = 200
                         },
                         new
                         {
                             Id = 5,
+                            CompanyBudget = 0m,
+                            FreeFloat = 3,
                             Name = "Country Government S.A.",
-                            Price = 314m
+                            Price = 314m,
+                            TotalShares = 50
                         });
                 });
 
-            modelBuilder.Entity("StockSimulator.Models.Transaction", b =>
+            modelBuilder.Entity("StockSimulator.Models.Database.Transaction", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -227,6 +283,31 @@ namespace StockSimulator.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Transactions");
+                });
+
+            modelBuilder.Entity("StockSimulator.Models.Database.UserShare", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StockId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StockId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserShares");
                 });
 
             modelBuilder.Entity("StockSimulator.Models.User", b =>
@@ -296,29 +377,48 @@ namespace StockSimulator.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("StockSimulator.Models.UserShare", b =>
+            modelBuilder.Entity("StockSimulator.Models.Database.CompanyMarketOffer", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                    b.HasBaseType("StockSimulator.Models.Database.MarketOffer");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
+                    b.HasDiscriminator().HasValue("CompanyMarketOffer");
 
-                    b.Property<int>("StockId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StockId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserShares");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Amount = 10,
+                            Price = 2.23m,
+                            StockId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Amount = 8,
+                            Price = 1024m,
+                            StockId = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Amount = 12,
+                            Price = 0.5m,
+                            StockId = 3
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Amount = 15,
+                            Price = 25.13m,
+                            StockId = 4
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Amount = 3,
+                            Price = 314m,
+                            StockId = 5
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -372,9 +472,20 @@ namespace StockSimulator.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("StockSimulator.Models.Transaction", b =>
+            modelBuilder.Entity("StockSimulator.Models.Database.MarketOffer", b =>
                 {
-                    b.HasOne("StockSimulator.Models.Stock", "Stock")
+                    b.HasOne("StockSimulator.Models.Database.Stock", "Stock")
+                        .WithMany()
+                        .HasForeignKey("StockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Stock");
+                });
+
+            modelBuilder.Entity("StockSimulator.Models.Database.Transaction", b =>
+                {
+                    b.HasOne("StockSimulator.Models.Database.Stock", "Stock")
                         .WithMany()
                         .HasForeignKey("StockId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -391,9 +502,9 @@ namespace StockSimulator.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("StockSimulator.Models.UserShare", b =>
+            modelBuilder.Entity("StockSimulator.Models.Database.UserShare", b =>
                 {
-                    b.HasOne("StockSimulator.Models.Stock", "Stock")
+                    b.HasOne("StockSimulator.Models.Database.Stock", "Stock")
                         .WithMany()
                         .HasForeignKey("StockId")
                         .OnDelete(DeleteBehavior.Cascade)

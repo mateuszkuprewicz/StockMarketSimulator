@@ -72,14 +72,13 @@ public class StockSimulatorDbContext : IdentityDbContext<User>
             cg
         );
 
-        modelBuilder.Entity<MarketOffer>().HasData(
+        modelBuilder.Entity<CompanyMarketOffer>().HasData(
             new CompanyMarketOffer()
             {
                 Id = 1,
                 Price = www.Price,
                 Amount = www.FreeFloat,
                 StockId = www.Id,
-                Stock = www
             },
             new CompanyMarketOffer()
             {
@@ -87,7 +86,6 @@ public class StockSimulatorDbContext : IdentityDbContext<User>
                 Price = uec.Price,
                 Amount = uec.FreeFloat,
                 StockId = uec.Id,
-                Stock = uec
             },
             new CompanyMarketOffer()
             {
@@ -95,7 +93,6 @@ public class StockSimulatorDbContext : IdentityDbContext<User>
                 Price = aaa.Price,
                 Amount = aaa.FreeFloat,
                 StockId = aaa.Id,
-                Stock = aaa
             },
             new CompanyMarketOffer()
             {
@@ -103,7 +100,6 @@ public class StockSimulatorDbContext : IdentityDbContext<User>
                 Price = sport.Price,
                 Amount = sport.FreeFloat,
                 StockId = sport.Id,
-                Stock = sport
             },
             new CompanyMarketOffer()
             {
@@ -111,7 +107,6 @@ public class StockSimulatorDbContext : IdentityDbContext<User>
                 Price = cg.Price,
                 Amount = cg.FreeFloat,
                 StockId = cg.Id,
-                Stock = cg
             }
         );
     }
