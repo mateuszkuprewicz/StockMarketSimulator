@@ -1,4 +1,4 @@
-﻿namespace StockSimulator.Models;
+﻿namespace StockSimulator.Models.DTOs;
 
 public class SellStockDto
 {

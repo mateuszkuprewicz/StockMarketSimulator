@@ -7,6 +7,7 @@ using StockSimulator.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using StockSimulator.Jobs;
+using StockSimulator.Models.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;

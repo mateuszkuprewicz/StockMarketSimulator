@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace StockSimulator.Models;
+namespace StockSimulator.Models.DTOs;
 
-public class RegisterRequest
+public class RegisterRequestDTO
 {
     [Required]
     public string login { get; set; }

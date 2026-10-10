@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StockSimulator.Models;
+using StockSimulator.Models.Database;
 
 namespace StockSimulator.Jobs;
 

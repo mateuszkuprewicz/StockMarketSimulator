@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using StockSimulator.Models;
+using StockSimulator.Models.DTOs;
 
 namespace StockSimulator.Controllers;
 
@@ -39,32 +40,32 @@ public class AuthenticationController : ControllerBase
     }
     
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDTO requestDto)
     {
         var temp = await _userManager.GetUserAsync(User);
         if(temp != null)
             return BadRequest(new { message = "User is logged in." });
         var user = new User
         {
-            Email = request.login,
-            UserName = request.login,
+            Email = requestDto.login,
+            UserName = requestDto.login,
             Money = 1000
         };
-        var result = await _userManager.CreateAsync(user, request.password);
+        var result = await _userManager.CreateAsync(user, requestDto.password);
         if (result.Succeeded)
         {
-            return await Login(request);
+            return await Login(requestDto);
         }
         return BadRequest(result.Errors);
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Login([FromBody] RegisterRequestDTO requestDto)
     {
         var user = await _userManager.GetUserAsync(User);
         if(user != null)
             return BadRequest(new { message = "You are already logged in. Log out first"});
-        var result = await _signInManager.PasswordSignInAsync(request.login, request.password, request.rememberMe, true);
+        var result = await _signInManager.PasswordSignInAsync(requestDto.login, requestDto.password, requestDto.rememberMe, true);
         if (result.Succeeded)
             return Ok(new { message = "User logged in successfully." });
         return Unauthorized();

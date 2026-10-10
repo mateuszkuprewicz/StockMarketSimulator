@@ -1,4 +1,6 @@
-namespace StockSimulator.Models;
+using StockSimulator.Models.Database;
+
+namespace StockSimulator.Models.Database;
 
 public class UserShare
 {

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StockSimulator.Models;
+using StockSimulator.Models.Database;
+using StockSimulator.Models.DTOs;
 
 namespace StockSimulator.Controllers;
 
@@ -29,8 +31,6 @@ public class StocksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> BuyStocks(BuyStockDto request)
     {
-        using var transaction = _context.Database.BeginTransaction(IsolationLevel.RepeatableRead);
-        
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
@@ -40,35 +40,66 @@ public class StocksController : ControllerBase
         if (request.Count <= 0)
             return BadRequest("You must buy a positive number of shares");
         
-        var requestedStock = await _context.Stocks.SingleOrDefaultAsync(s => s.Id == request.Id);
+        var requestedStock = await _context.Stocks.SingleOrDefaultAsync(s => s.Id == request.StockId);
         if(requestedStock == null)
             return NotFound(new { message = "Stock with provided id not found." });
         
-        decimal requestCost = request.Count * requestedStock.Price;
-        if(requestCost > user.Money)
-            return BadRequest(new { message = "You don't have enough money to buy these shares." });
+        using var transaction = _context.Database.BeginTransaction(IsolationLevel.RepeatableRead);
         
-        user.Money -= requestCost;
+        if(user.Money <  request.Price * request.Price)
+            return BadRequest(new { message = "You don't have enough money to buy that number of shares of such price" });
+        decimal finalCost = 0.0m;
+        
+        List<MarketOffer> offers = await _context.MarketOffers.OrderBy(o => o.Price).Where(o => o.StockId == request.StockId && o.Price <= request.Price).Include(o => o.Stock).Include(o => (o as UserMarketOffer).User).ToListAsync();
+        int fittingOffers = offers.Sum(fo => fo.Amount);
+        if(fittingOffers < request.Count)
+            return NotFound(new { message = "There are only " + fittingOffers + "shares not more expensive than your requested price." });
+
+        int i = 0;
+        int requestCount = request.Count;
+        while (requestCount > 0)
+        {
+            int reserved = 0;
+            if (offers[i].Amount > requestCount)
+            {
+                reserved = requestCount;
+                offers[i].OnPurchase(requestCount);
+                requestCount = 0;
+            }
+            else
+            {
+                reserved = offers[i].Amount;
+                requestCount -= offers[i].Amount;
+                offers[i].OnPurchase(offers[i].Amount);
+                _context.MarketOffers.Remove(offers[i]);
+            }
+            finalCost += reserved * offers[i].Price;
+            i++;
+        }
+        
+        if(user.Money < finalCost)
+            return BadRequest("You don't have enough money to buy that number of shares.");
+        user.Money -= finalCost;
         
         _context.Transactions.Add(new Transaction()
         {
             UserId = user.Id,
             User = user,
-            StockId = request.Id,
+            StockId = request.StockId,
             Stock = requestedStock,
             Quantity = request.Count,
-            Price = requestedStock.Price,
+            Price = finalCost/request.Count,
             Date = DateTime.Now,
             Type = TransactionType.Buy
         });
 
-        UserShare? userShare = await _context.UserShares.SingleOrDefaultAsync(s => s.UserId == user.Id && s.StockId == request.Id);
+        UserShare? userShare = await _context.UserShares.SingleOrDefaultAsync(s => s.UserId == user.Id && s.StockId == request.StockId);
         if (userShare == null)
             _context.UserShares.Add(new UserShare()
             {
                 UserId = user.Id,
                 User = user,
-                StockId = request.Id,
+                StockId = request.StockId,
                 Stock = requestedStock,
                 Quantity = request.Count
             });
@@ -78,7 +109,7 @@ public class StocksController : ControllerBase
         }
         
         await _context.SaveChangesAsync();
-        transaction.Commit();
+        await transaction.CommitAsync();
         
         return Ok(new {message = "Successfully bought " + request.Count + " " + requestedStock.Name + " shares." });
     }
@@ -184,5 +215,11 @@ public class StocksController : ControllerBase
             .ToListAsync();
 
         return Ok(shares);
+    }
+
+    [HttpGet("OrderBook")]
+    public async Task<ActionResult<List<MarketOffer>>> GetOrderBook()
+    {
+        return await _context.MarketOffers.ToListAsync();
     }
 }
