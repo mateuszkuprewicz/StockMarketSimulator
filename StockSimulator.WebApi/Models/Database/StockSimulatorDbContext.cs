@@ -77,35 +77,35 @@ public class StockSimulatorDbContext : IdentityDbContext<User>
             {
                 Id = 1,
                 Price = www.Price,
-                Amount = www.FreeFloat,
+                Quantity = www.FreeFloat,
                 StockId = www.Id,
             },
             new CompanyMarketOffer()
             {
                 Id = 2,
                 Price = uec.Price,
-                Amount = uec.FreeFloat,
+                Quantity = uec.FreeFloat,
                 StockId = uec.Id,
             },
             new CompanyMarketOffer()
             {
                 Id = 3,
                 Price = aaa.Price,
-                Amount = aaa.FreeFloat,
+                Quantity = aaa.FreeFloat,
                 StockId = aaa.Id,
             },
             new CompanyMarketOffer()
             {
                 Id = 4,
                 Price = sport.Price,
-                Amount = sport.FreeFloat,
+                Quantity = sport.FreeFloat,
                 StockId = sport.Id,
             },
             new CompanyMarketOffer()
             {
                 Id = 5,
                 Price = cg.Price,
-                Amount = cg.FreeFloat,
+                Quantity = cg.FreeFloat,
                 StockId = cg.Id,
             }
         );

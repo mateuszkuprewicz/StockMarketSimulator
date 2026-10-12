@@ -8,7 +8,7 @@ public abstract class MarketOffer
     public decimal Price{ get; set; }
     
     [ConcurrencyCheck]
-    public int Amount{ get; set; }
+    public int Quantity{ get; set; }
     public int StockId { get; set; }
     public Stock Stock{ get; set; }
     public abstract void OnPurchase(int requestedAmount);
@@ -16,12 +16,12 @@ public abstract class MarketOffer
 
 public class UserMarketOffer : MarketOffer
 {
-    public int UserId { get; set; }
-    public required User User { get; set; }
+    public required string UserId { get; set; }
+    public User User { get; set; }
 
     public override void OnPurchase(int requestedAmount)
     {
-        Amount -= requestedAmount;
+        Quantity -= requestedAmount;
         User.Money += requestedAmount * Price;
     }
 }
@@ -30,7 +30,7 @@ public class CompanyMarketOffer : MarketOffer
 {
     public override void OnPurchase(int requestedAmount)
     {
-        Amount -= requestedAmount;
+        Quantity -= requestedAmount;
         Stock.CompanyBudget += requestedAmount * Price;
         Stock.FreeFloat -= requestedAmount;
     }

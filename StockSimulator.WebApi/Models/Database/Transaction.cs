@@ -8,9 +8,9 @@ public class Transaction
 {
     public int Id { get; set; }
     public required string UserId { get; set; }
-    public required User User { get; set; }
+    public User User { get; set; }
     public int StockId { get; set; }
-    public required Stock Stock { get; set; }
+    public Stock Stock { get; set; }
     public int Quantity { get; set; }
     public decimal Price { get; set; }
     public DateTime Date { get; set; }
