@@ -11,8 +11,8 @@ using StockSimulator.Models.Database;
 namespace StockSimulator.Migrations
 {
     [DbContext(typeof(StockSimulatorDbContext))]
-    [Migration("20261010173539_order-book")]
-    partial class orderbook
+    [Migration("20261013141759_OrderBook")]
+    partial class OrderBook
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -148,39 +148,7 @@ namespace StockSimulator.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("StockSimulator.Models.Database.MarketOffer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Amount")
-                        .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("StockId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StockId");
-
-                    b.ToTable("MarketOffers");
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("MarketOffer");
-
-                    b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("StockSimulator.Models.Database.Stock", b =>
+            modelBuilder.Entity("StockSimulator.Models.Database.Company", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -254,10 +222,45 @@ namespace StockSimulator.Migrations
                         });
                 });
 
+            modelBuilder.Entity("StockSimulator.Models.Database.MarketOffer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Quantity")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("MarketOffers");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("MarketOffer");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("StockSimulator.Models.Database.Transaction", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CompanyId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Date")
@@ -269,23 +272,24 @@ namespace StockSimulator.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("StockId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("UserBuyerId")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
+                    b.Property<string>("UserSellerId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StockId");
+                    b.HasIndex("CompanyId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserBuyerId");
 
-                    b.ToTable("Transactions");
+                    b.HasIndex("UserSellerId");
+
+                    b.ToTable("Transactions", t =>
+                        {
+                            t.HasCheckConstraint("CK_Transaction_No_Company_To_Company", "UserBuyerId IS NOT NULL OR UserSellerId IS NOT NULL");
+                        });
                 });
 
             modelBuilder.Entity("StockSimulator.Models.Database.UserShare", b =>
@@ -294,10 +298,11 @@ namespace StockSimulator.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Quantity")
+                    b.Property<int>("CompanyId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("StockId")
+                    b.Property<int>("Quantity")
+                        .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserId")
@@ -306,7 +311,7 @@ namespace StockSimulator.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StockId");
+                    b.HasIndex("CompanyId");
 
                     b.HasIndex("UserId");
 
@@ -390,38 +395,51 @@ namespace StockSimulator.Migrations
                         new
                         {
                             Id = 1,
-                            Amount = 10,
+                            CompanyId = 1,
                             Price = 2.23m,
-                            StockId = 1
+                            Quantity = 10
                         },
                         new
                         {
                             Id = 2,
-                            Amount = 8,
+                            CompanyId = 2,
                             Price = 1024m,
-                            StockId = 2
+                            Quantity = 8
                         },
                         new
                         {
                             Id = 3,
-                            Amount = 12,
+                            CompanyId = 3,
                             Price = 0.5m,
-                            StockId = 3
+                            Quantity = 12
                         },
                         new
                         {
                             Id = 4,
-                            Amount = 15,
+                            CompanyId = 4,
                             Price = 25.13m,
-                            StockId = 4
+                            Quantity = 15
                         },
                         new
                         {
                             Id = 5,
-                            Amount = 3,
+                            CompanyId = 5,
                             Price = 314m,
-                            StockId = 5
+                            Quantity = 3
                         });
+                });
+
+            modelBuilder.Entity("StockSimulator.Models.Database.UserMarketOffer", b =>
+                {
+                    b.HasBaseType("StockSimulator.Models.Database.MarketOffer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasIndex("UserId");
+
+                    b.HasDiscriminator().HasValue("UserMarketOffer");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -477,39 +495,43 @@ namespace StockSimulator.Migrations
 
             modelBuilder.Entity("StockSimulator.Models.Database.MarketOffer", b =>
                 {
-                    b.HasOne("StockSimulator.Models.Database.Stock", "Stock")
+                    b.HasOne("StockSimulator.Models.Database.Company", "Company")
                         .WithMany()
-                        .HasForeignKey("StockId")
+                        .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Stock");
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("StockSimulator.Models.Database.Transaction", b =>
                 {
-                    b.HasOne("StockSimulator.Models.Database.Stock", "Stock")
+                    b.HasOne("StockSimulator.Models.Database.Company", "Company")
                         .WithMany()
-                        .HasForeignKey("StockId")
+                        .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StockSimulator.Models.User", "User")
+                    b.HasOne("StockSimulator.Models.User", "UserBuyer")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserBuyerId");
 
-                    b.Navigation("Stock");
+                    b.HasOne("StockSimulator.Models.User", "UserSeller")
+                        .WithMany()
+                        .HasForeignKey("UserSellerId");
 
-                    b.Navigation("User");
+                    b.Navigation("Company");
+
+                    b.Navigation("UserBuyer");
+
+                    b.Navigation("UserSeller");
                 });
 
             modelBuilder.Entity("StockSimulator.Models.Database.UserShare", b =>
                 {
-                    b.HasOne("StockSimulator.Models.Database.Stock", "Stock")
+                    b.HasOne("StockSimulator.Models.Database.Company", "Company")
                         .WithMany()
-                        .HasForeignKey("StockId")
+                        .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -519,7 +541,18 @@ namespace StockSimulator.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Stock");
+                    b.Navigation("Company");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StockSimulator.Models.Database.UserMarketOffer", b =>
+                {
+                    b.HasOne("StockSimulator.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

@@ -9,8 +9,8 @@ public abstract class MarketOffer
     
     [ConcurrencyCheck]
     public int Quantity{ get; set; }
-    public int StockId { get; set; }
-    public Stock Stock{ get; set; }
+    public int CompanyId { get; set; }
+    public Company Company{ get; set; }
     public abstract void OnPurchase(int requestedAmount);
 }
 
@@ -31,7 +31,7 @@ public class CompanyMarketOffer : MarketOffer
     public override void OnPurchase(int requestedAmount)
     {
         Quantity -= requestedAmount;
-        Stock.CompanyBudget += requestedAmount * Price;
-        Stock.FreeFloat -= requestedAmount;
+        Company.CompanyBudget += requestedAmount * Price;
+        Company.FreeFloat -= requestedAmount;
     }
 }

@@ -22,7 +22,7 @@ public class StocksController : ControllerBase
     }
 
     [HttpGet()]
-    public async Task<ActionResult<IEnumerable<Stock>>> GetStocks()
+    public async Task<ActionResult<IEnumerable<Company>>> GetStocks()
     {
         return await _context.Stocks.ToListAsync();
     }
@@ -37,26 +37,26 @@ public class StocksController : ControllerBase
         if(request.MaxPrice < 0.00m)
             return BadRequest("You must buy shares for a  positive amount of money");
 
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized(new { message = "User not logged." });
+        }
+            
+        var requestedStock = await _context.Stocks.SingleOrDefaultAsync(s => s.Id == request.CompanyId);
+        if(requestedStock == null)
+            return NotFound(new { message = "Stock with provided id not found." });
+        
         int maxTries = 10;
         for (int ii = 0; ii < maxTries; ii++)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return Unauthorized(new { message = "User not logged." });
-            }
-            
-            var requestedStock = await _context.Stocks.SingleOrDefaultAsync(s => s.Id == request.StockId);
-            if(requestedStock == null)
-                return NotFound(new { message = "Stock with provided id not found." });
-            
             await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead);
         
             if(user.Money <  request.MaxPrice * request.MaxPrice)
                 return BadRequest(new { message = "You need at least {request.Count * request.MaxPrice:C} to place this order with a max price of {request.MaxPrice:C} per share." });
             decimal finalCost = 0.0m;
             
-            List<MarketOffer> offers = await _context.MarketOffers.OrderBy(o => o.Price).Where(o => o.StockId == request.StockId && o.Price <= request.MaxPrice).Include(o => o.Stock).Include(o => (o as UserMarketOffer).User).ToListAsync();
+            List<MarketOffer> offers = await _context.MarketOffers.OrderBy(o => o.Price).Where(o => o.CompanyId == request.CompanyId && o.Price <= request.MaxPrice).Include(o => o.Company).Include(o => (o as UserMarketOffer)!.User).ToListAsync();
             int fittingOffers = offers.Sum(fo => fo.Quantity);
             if(fittingOffers < request.Count)
                 return NotFound(new { message = "There are only " + fittingOffers + "shares not more expensive than your requested price." });
@@ -80,33 +80,29 @@ public class StocksController : ControllerBase
                     _context.MarketOffers.Remove(offers[i]);
                 }
                 finalCost += reserved * offers[i].Price;
+                bool isUserSelling = !(offers[i] is CompanyMarketOffer);
+                _context.Transactions.Add(new Transaction()
+                {
+                    Quantity = reserved,
+                    Price = offers[i].Price,
+                    Date = DateTime.Now,
+                    UserBuyerId = user.Id,
+                    CompanyId = request.CompanyId,
+                    UserSellerId = isUserSelling ? (offers[i] as UserMarketOffer)!.UserId : null
+                });
                 i++;
             }
             
             if(user.Money < finalCost)
                 return BadRequest("You don't have enough money to buy that number of shares.");
             user.Money -= finalCost;
-            
-            _context.Transactions.Add(new Transaction()
-            {
-                UserId = user.Id,
-                User = user,
-                StockId = request.StockId,
-                Stock = requestedStock,
-                Quantity = request.Count,
-                Price = finalCost/request.Count,
-                Date = DateTime.Now,
-                Type = TransactionType.Buy
-            });
 
-            UserShare? userShare = await _context.UserShares.SingleOrDefaultAsync(s => s.UserId == user.Id && s.StockId == request.StockId);
+            UserShare? userShare = await _context.UserShares.SingleOrDefaultAsync(s => s.UserId == user.Id && s.CompanyId == request.CompanyId);
             if (userShare == null)
                 _context.UserShares.Add(new UserShare()
                 {
                     UserId = user.Id,
-                    User = user,
-                    StockId = request.StockId,
-                    Stock = requestedStock,
+                    CompanyId = request.CompanyId,
                     Quantity = request.Count
                 });
             else
@@ -149,13 +145,11 @@ public class StocksController : ControllerBase
         if (request.Price < 0.0m)
             return BadRequest("You must sell for a non-negative amount of money");
         
-        var requestedStock = await _context.Stocks.SingleOrDefaultAsync(s => s.Id == request.StockId);
+        var requestedStock = await _context.Stocks.SingleOrDefaultAsync(s => s.Id == request.CompanyId);
         if(requestedStock == null)
             return NotFound(new { message = "Stock with provided id not found." });
         
-        await using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        var userShare =  await _context.UserShares.SingleOrDefaultAsync(s => s.UserId == user.Id && s.StockId == request.StockId);
+        var userShare =  await _context.UserShares.SingleOrDefaultAsync(s => s.UserId == user.Id && s.CompanyId == request.CompanyId);
         if (userShare == null)
             return BadRequest(new { message = "You don't own this share." });
         if(request.Count > userShare.Quantity)
@@ -170,19 +164,15 @@ public class StocksController : ControllerBase
             Quantity = request.Count,
             Price = request.Price,
             UserId = user.Id,
-            User = user,
-            StockId = request.StockId,
-            Stock = requestedStock
+            CompanyId = request.CompanyId,
         });
 
         try
         {
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
         }
         catch (DbUpdateConcurrencyException e)
         {
-            await transaction.RollbackAsync();
             return Conflict("Your another request is processed. Refresh and try again.");
         }
 
@@ -212,13 +202,13 @@ public class StocksController : ControllerBase
             _context.MarketOffers.Remove(marketOffer);
         
         var userShare = await _context.UserShares
-            .SingleOrDefaultAsync(s => s.UserId == user.Id && s.StockId == marketOffer.StockId);
+            .SingleOrDefaultAsync(s => s.UserId == user.Id && s.CompanyId == marketOffer.CompanyId);
         if (userShare == null)
         {
             _context.UserShares.Add(new UserShare()
             {
                 UserId = user.Id,
-                StockId = marketOffer.StockId, 
+                CompanyId = marketOffer.CompanyId, 
                 Quantity = request.Quantity
             });
         }
@@ -238,9 +228,9 @@ public class StocksController : ControllerBase
         return Ok(new { message = "Successfully cancelled offer" });
     }
     
-    [HttpGet("transactions")]
+    [HttpGet("my-transactions")]
     [Authorize]
-    public async Task<IActionResult> GetTransactions()
+    public async Task<IActionResult> GetMyTransactions()
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -248,25 +238,40 @@ public class StocksController : ControllerBase
             return Unauthorized(new { message = "User not logged." });
         }
 
-        var transactions = await _context.Transactions
-            .Include(t => t.Stock)
-            .Where(t => t.UserId == user.Id)
+        var soldTransactions = await _context.Transactions
+            .Where(t => t.UserSellerId == user.Id)
             .OrderByDescending(t => t.Date)
             .Select(t => new
             {
                 Id = t.Id,
-                StockName = t.Stock.Name,
+                StockName = t.Company!.Name,
                 Quantity = t.Quantity,
                 Price = t.Price,
                 Date = t.Date,
-                Type = t.Type.ToString()
+                Seller = "me",
+                Buyer = t.UserBuyerId != null ? $"User with id: {t.UserBuyerId}" : $"Company with id: {t.CompanyId}",
+            })
+            .ToListAsync();
+        
+        var boughtTransactions = await _context.Transactions
+            .Where(t => t.UserBuyerId == user.Id)
+            .OrderByDescending(t => t.Date)
+            .Select(t => new
+            {
+                Id = t.Id,
+                StockName = t.Company!.Name,
+                Quantity = t.Quantity,
+                Price = t.Price,
+                Date = t.Date,
+                Seller = t.UserSellerId != null ? $"User with id: {t.UserSellerId}" : $"Company with id: {t.CompanyId}",
+                Buyer = "me"
             })
             .ToListAsync();
 
-        return Ok(transactions);
+        return Ok((soldTransactions.Concat(boughtTransactions)));
     }
 
-    [HttpGet("shares")]
+    [HttpGet("my-shares")]
     [Authorize]
     public async Task<IActionResult> GetShares()
     {
@@ -277,16 +282,15 @@ public class StocksController : ControllerBase
         }
 
         var shares = await _context.UserShares
-            .Include(s => s.Stock)
             .Where(s => s.UserId == user.Id)
             .Select(s => new
             {
                 Id = s.Id,
-                StockId = s.StockId,
-                StockName = s.Stock.Name,
+                StockId = s.CompanyId,
+                StockName = s.Company!.Name,
                 Quantity = s.Quantity,
-                CurrentPrice = s.Stock.Price,
-                TotalValue = s.Quantity * s.Stock.Price
+                CurrentPrice = s.Company.Price,
+                TotalValue = s.Quantity * s.Company.Price
             })
             .ToListAsync();
 
@@ -303,13 +307,27 @@ public class StocksController : ControllerBase
             return Unauthorized(new { message = "User not logged." });
         }
 
-        return await _context.MarketOffers.OfType<UserMarketOffer>().Where(s => s.UserId == user.Id).ToListAsync();
+        return Ok(await _context.MarketOffers.OfType<UserMarketOffer>().Where(s => s.UserId == user.Id).Select(o => new
+        {
+            o.Id,
+            o.Price,
+            o.Quantity,
+            o.CompanyId,
+            o.Company.Name,
+        }).ToListAsync());
     }
 
     [HttpGet("OrderBook")]
-    public async Task<ActionResult<List<MarketOffer>>> GetOrderBook()
+    public async Task<IActionResult> GetOrderBook()
     {
-        return await _context.MarketOffers.ToListAsync();
+        return Ok(await _context.MarketOffers.Select(o => new
+        {
+            o.Id,
+            o.Price,
+            o.Quantity,
+            o.CompanyId,
+            o.Company.Name,
+            Seller = (o is UserMarketOffer) ? $"User with id {(o as UserMarketOffer)!.UserId})" :  $"Company with id: {o.CompanyId}",
+        }).ToListAsync());
     }
-    
 }
